@@ -1,5 +1,6 @@
 CMakeFiles/TinyShark.dir/src/main.cpp.o: \
  /home/kleeper/TinyShark/src/main.cpp /usr/include/stdc-predef.h \
+ /home/kleeper/TinyShark/include/captureDev.h \
  /usr/include/c++/11/iostream \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
@@ -143,8 +144,7 @@ CMakeFiles/TinyShark.dir/src/main.cpp.o: \
  /usr/include/c++/11/bits/locale_facets.tcc \
  /usr/include/c++/11/bits/basic_ios.tcc \
  /usr/include/c++/11/bits/ostream.tcc /usr/include/c++/11/istream \
- /usr/include/c++/11/bits/istream.tcc \
- /home/kleeper/TinyShark/include/captureDev.h /usr/include/c++/11/thread \
+ /usr/include/c++/11/bits/istream.tcc /usr/include/c++/11/thread \
  /usr/include/c++/11/bits/std_thread.h /usr/include/c++/11/tuple \
  /usr/include/c++/11/utility /usr/include/c++/11/bits/stl_relops.h \
  /usr/include/c++/11/array /usr/include/c++/11/bits/uses_allocator.h \
@@ -209,7 +209,13 @@ CMakeFiles/TinyShark.dir/src/main.cpp.o: \
  /usr/include/c++/11/map /usr/include/c++/11/bits/stl_tree.h \
  /usr/include/c++/11/bits/stl_map.h \
  /usr/include/c++/11/bits/stl_multimap.h \
- /usr/include/c++/11/bits/erase_if.h /usr/include/unistd.h \
+ /usr/include/c++/11/bits/erase_if.h /usr/include/c++/11/iomanip \
+ /usr/include/c++/11/locale \
+ /usr/include/c++/11/bits/locale_facets_nonio.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/time_members.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/messages_members.h \
+ /usr/include/libintl.h /usr/include/c++/11/bits/locale_facets_nonio.tcc \
+ /usr/include/c++/11/bits/locale_conv.h /usr/include/unistd.h \
  /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h \

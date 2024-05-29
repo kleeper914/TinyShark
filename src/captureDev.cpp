@@ -1,6 +1,13 @@
 #include "captureDev.h"
 
-CaptureDev::CaptureDev(const std::string& interface="127.0.0.1", const std::string& protocol="http", int port=80)
+void printTime()
+{
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::cout << std::put_time(std::localtime(&now_c), "%Y-%m-%d %H:%M:%S") << std::endl;
+}
+
+CaptureDev::CaptureDev(const std::string& interface="0.0.0.0", const std::string& protocol="http", int port=80)
     : interface_(interface),
     dev_(nullptr),
     currentPort_(80),
@@ -17,7 +24,7 @@ CaptureDev::CaptureDev(const std::string& interface="127.0.0.1", const std::stri
     {
         throw std::runtime_error("Cannot open device");
     }
-    
+    changeFilter();
 }
 
 CaptureDev::~CaptureDev()
@@ -31,23 +38,22 @@ CaptureDev::~CaptureDev()
 
 void CaptureDev::start()
 {
+    //std::cout << "start()" << std::endl;
     stopCapture_ = false;
-    captureThread_ = std::thread(&CaptureDev::capturePacket, this);
+    capturePacket();
 }
 
 void CaptureDev::stop()
 {
     stopCapture_ = true;
-    if(captureThread_.joinable())
-    {
-        captureThread_.join();
-    }
 }
 
 void CaptureDev::capturePacket()
 {
-    while(!stopCapture_)
+    //std::cout << "capturePacket()" << std::endl;
+    while(stopCapture_ == false)
     {
+        //std::cout << "enter loop " << std::endl;
         if(updateFilter_)   //如果需要更新过滤器
         {
             dev_->stopCapture();
@@ -76,7 +82,9 @@ void CaptureDev::capturePacket()
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); //每隔100毫秒抓包
+        //std::cout << "start capturing packets" << std::endl;
         dev_->startCapture(onPacketArrives, nullptr);
+        dev_->stopCapture();
     }
 }
 
@@ -89,14 +97,21 @@ void CaptureDev::setFilter(const std::string& protocol, int port)
 
 void CaptureDev::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie)
 {
+    std::cout << "receive a packet" << std::endl;
+    printTime();
+
     pcpp::Packet parsedPacket(packet);
     //解析以太网层
     pcpp::EthLayer* ethernetLayer = parsedPacket.getLayerOfType<pcpp::EthLayer>();
+    
     if(ethernetLayer != nullptr)
     {
         std::cout << "Ethernet Layer:" << std::endl;
         std::cout << "Source MAC: " << ethernetLayer->getSourceMac() << std::endl;
-        std::cout << "Destination MAC: " << ethernetLayer->getDestMac() << std::endl;
+        if(ethernetLayer->getDestMac().isValid())
+        {
+            std::cout << "Destination MAC: " << ethernetLayer->getDestMac() << std::endl;
+        }
     }
     //解析IP层
     //IPV4
@@ -105,7 +120,10 @@ void CaptureDev::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* 
     {
         std::cout << "IPv4 Layer:" << std::endl;
         std::cout << "Source IP: " << ipv4Layer->getSrcIPv4Address() << std::endl;
-        std::cout << "Destination IP: " << ipv4Layer->getDstIPv4Address() << std::endl;
+        if(ipv4Layer->getDstIPv4Address().isValid())
+        {
+            std::cout << "Destination IP: " << ipv4Layer->getDstIPv4Address() << std::endl;
+        }
     }
     //IPV6
     pcpp::IPv6Layer* ipv6Layer = parsedPacket.getLayerOfType<pcpp::IPv6Layer>();
@@ -113,7 +131,10 @@ void CaptureDev::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* 
     {
         std::cout << "IPv6 Layer:" << std::endl;
         std::cout << "Source IP: " << ipv6Layer->getSrcIPv6Address() << std::endl;
-        std::cout << "Destination IP: " << ipv6Layer->getDstIPv6Address() << std::endl;
+        if(ipv6Layer->getDstIPv6Address().isValid())
+        {
+            std::cout << "Destination IP: " << ipv6Layer->getDstIPv6Address() << std::endl;
+        }
     }
     //解析传输层
     //TCP
@@ -122,7 +143,10 @@ void CaptureDev::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* 
     {
         std::cout << "TCP Layer:" << std::endl;
         std::cout << "Source Port: " << tcpLayer->getSrcPort() << std::endl;
-        std::cout << "Destination Port: " << tcpLayer->getDstPort() << std::endl;
+        if(tcpLayer->getDstPort())
+        {
+            std::cout << "Destination Port: " << tcpLayer->getDstPort() << std::endl;
+        }
     }
     //UDP
     pcpp::UdpLayer* udpLayer = parsedPacket.getLayerOfType<pcpp::UdpLayer>();
@@ -130,7 +154,10 @@ void CaptureDev::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* 
     {
         std::cout << "UDP Layer:" << std::endl;
         std::cout << "Source Port: " << udpLayer->getSrcPort() << std::endl;
-        std::cout << "Destination Port: " << udpLayer->getDstPort() << std::endl;
+        if(udpLayer->getDstPort())
+        {
+            std::cout << "Destination Port: " << udpLayer->getDstPort() << std::endl;
+        }
     }
     //解析应用层
     //HTTP
@@ -167,4 +194,43 @@ void CaptureDev::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* 
     }
 
     std::cout << "----------------------------------------" << std::endl;
+}
+
+void CaptureDev::changeFilter()
+{
+    // pcpp::PortFilter port_filter(currentPort_, pcpp::DST);
+    // pcpp::ProtoFilter* proto_filter = nullptr;
+    // if(currentProtocol_ == "tcp")
+    // {
+    //     proto_filter = new pcpp::ProtoFilter(pcpp::TCP);
+    // }
+    // else if(currentProtocol_ == "udp")
+    // {
+    //     proto_filter = new pcpp::ProtoFilter(pcpp::UDP);
+    // }
+    // else if(currentProtocol_ == "http")
+    // {
+    //     proto_filter = new pcpp::ProtoFilter(pcpp::HTTP);
+    // }
+
+    // pcpp::AndFilter filter;
+    // filter.addFilter(proto_filter);
+    // filter.addFilter(&port_filter);
+
+    // std::string filterAsString = currentProtocol_ + " and " + std::to_string(currentPort_);
+    // std::cout << filterAsString << std::endl;
+    // pcpp::BPFStringFilter filter(filterAsString);
+    // std::cout << "create filter done, protocol: " << currentProtocol_ << " port: " << currentPort_ << std::endl;
+
+    pcpp::ProtoFilter filter(currentPort_);
+    if(!dev_->setFilter(filter))
+    {
+        std::cerr << "setFilter error !" << std::endl; 
+    }
+    std::cout << "set filter done, protocol: " << currentProtocol_ << " port: " << currentPort_ << std::endl;
+    // if(proto_filter != nullptr)
+    // {
+    //     delete proto_filter;
+    //     proto_filter = nullptr;
+    // }
 }

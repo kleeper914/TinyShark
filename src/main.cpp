@@ -1,5 +1,3 @@
-#include <iostream>
-#include <string>
 #include "captureDev.h"
 #include <unistd.h>
 #include <thread>
@@ -31,10 +29,9 @@ int main(int argc, char* argv[])
 
     try
     {
-        CaptureDev dev("127.0.0.1", default_protocol, default_port);
+        CaptureDev dev(IPADDR, default_protocol, default_port);
         dev.start();
         std::cout << "Capturing packets on " << IPADDR << " port " << default_port << " protocol " << default_protocol << std::endl;
-        
     }
     catch(const std::exception& e)
     {

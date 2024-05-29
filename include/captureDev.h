@@ -15,6 +15,10 @@
 #include <TcpLayer.h>
 #include <UdpLayer.h>
 #include <HttpLayer.h>
+#include <chrono>
+#include <iomanip>
+
+void printTime();
 
 class CaptureDev
 {
@@ -26,15 +30,15 @@ public:
     void setFilter(const std::string& protocol, int port);
 private:
     void capturePacket();
+    void changeFilter();
     static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie);  //pcpp回调函数重写
 private:
     std::string interface_;
     int currentPort_;
     std::string currentProtocol_;
     pcpp::PcapLiveDevice* dev_;
-    std::thread captureThread_;
-    std::atomic<bool> stopCapture_;
-    std::atomic<bool> updateFilter_;
+    bool stopCapture_;
+    bool updateFilter_;
 };
 
 #endif
